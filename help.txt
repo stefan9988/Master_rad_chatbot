@@ -1,0 +1,8 @@
+Folder code
+
+create_unique_df.py - U bazi podataka se nalaze neka pitanja koja se ponavljaju ali imaju razlicite odgovore.
+                      Ova skripta pravi df sa jedinstvenim vrednostima pitanja i spaja sve odgvore vezane za isto
+                      pitanje.
+
+preprocessing.py - Sadrzi funkciju za uklanjanje stop reci i znakova, kao i funkcije za stemming, lemmatizaciju i
+                   funkcije vezane za TF i TF-IDF.
