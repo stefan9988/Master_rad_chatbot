@@ -8,6 +8,14 @@ import matplotlib.pyplot as plt
 
 
 def load_data():
+    """
+        Load data from the 'data/test_questions_json.json' file and a CSV file ('data/data_unique.csv').
+
+        Returns:
+        - pd.Series: Series of questions from the CSV file.
+        - pd.Series: Series of test questions from the JSON file.
+        - pd.Series: Series of original questions from the JSON file.
+        """
     with open(r'data/test_questions_json.json', 'r') as file:
         data = json.load(file)
 
@@ -21,7 +29,19 @@ def load_data():
                                                                                  name='Original Question')
 
 
-def calculate_similarity(all_questions_vector, question_vector, questions, metric='cosine'):
+def calculate_similarity(all_questions_vector, question_vector, questions, metric='cosine') -> pd.DataFrame:
+    """
+        Calculate similarity or distance between a question vector and all question vectors.
+
+        Parameters:
+        - all_questions_vector: Matrix of vectors representing all questions.
+        - question_vector: Vector representing the target question.
+        - questions: Series of questions corresponding to the vectors.
+        - metric (str): Similarity or distance metric to be used ('cosine' or any valid metric supported by sklearn).
+
+        Returns:
+        - pd.DataFrame: DataFrame containing questions and their similarity or distance values.
+        """
     if metric == 'cosine':
         similarities = cosine_similarity(question_vector, all_questions_vector).flatten()
         df = pd.DataFrame({'Question': questions, 'Cosine': similarities.flatten()})

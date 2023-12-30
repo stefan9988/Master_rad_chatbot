@@ -1,10 +1,10 @@
 Folder code
 
-create_unique_df.py - U bazi podataka se nalaze neka pitanja koja se ponavljaju ali imaju razlicite odgovore.
-                      Ova skripta pravi df sa jedinstvenim vrednostima pitanja i spaja sve odgvore vezane za isto
-                      pitanje.
+create_unique_df.py - In the database, there are some questions that repeat but have different answers.
+                      This script creates a DataFrame with unique question values and combines all the
+                      answers related to the same question.
 
-preprocessing.py - Sadrzi funkciju za uklanjanje stop reci i znakova, kao i funkcije za stemming, lemmatizaciju i
-                   funkcije vezane za TF i TF-IDF.
+preprocessing.py - Contains a function for removing stop words and characters, as well as functions for stemming,
+                   lemmatization, and functions related to TF-IDF.
 
-main.py - U ovoj skripti se nalazi kompletan kod za pokretanje modela sa najboljim parametrima
+main.py - This script contains the complete code for running the model with the best parameters.
