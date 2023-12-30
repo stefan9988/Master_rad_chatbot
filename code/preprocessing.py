@@ -1,11 +1,12 @@
+import re
+
 import nltk
+import pandas as pd
 from nltk import WordNetLemmatizer
 from nltk.corpus import stopwords
-from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
-import pandas as pd
-import numpy as np
-import re
 from nltk.stem import PorterStemmer
+from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 
 def remove_stopwords_and_punctuation(question):
@@ -45,9 +46,26 @@ def get_lemm_questions_series(questions):
     return lemm_questions
 
 
+def tf_idf(train_s: pd.Series, test_s: pd.Series or None, num_features: int or None):
+    vectorizer = TfidfVectorizer(max_features=num_features)
+    train_vectors = vectorizer.fit_transform(train_s)
+    if test_s is not None:
+        test_vectors = vectorizer.transform(test_s)
+    else:
+        test_vectors = None
+    feature_names = vectorizer.get_feature_names_out()
+
+
+    return train_vectors, test_vectors, feature_names
+
 if __name__ == '__main__':
     df = pd.read_csv('data/data_unique.csv')
     questions = df.Question
 
     questions = [remove_stopwords_and_punctuation(q) for q in questions]
-    print(get_lemm_questions_series(questions))
+    lemm_q = get_lemm_questions_series(questions)
+
+    a,b,c=tf_idf(lemm_q,None,None)
+    print(f'Broj unique reci u bazi: {len(c)}')
+
+
