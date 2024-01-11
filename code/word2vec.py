@@ -5,16 +5,11 @@ import pandas as pd
 import pickle
 import nltk
 from nltk.corpus import stopwords
-
 from code.preprocessing import remove_stopwords_and_punctuation, get_lemm_questions_series, get_stemmed_questions_series
-from code.vector_similarity import load_data, calculate_similarity
+from code.vector_similarity import load_data
 from nltk.tokenize import RegexpTokenizer
 from gensim.models import Word2Vec
-from gensim.models.callbacks import CallbackAny2Vec
 import gensim.downloader
-from pathlib import Path
-
-from sklearn.model_selection import train_test_split
 from sklearn.neighbors import NearestNeighbors
 
 
@@ -25,8 +20,6 @@ def get_word_vector(word: str, model) -> np.ndarray:
     Parameters:
         word (str): The word for which to retrieve the word vector.
         model (Word2Vec or KeyedVectors): The word embedding model (Word2Vec or KeyedVectors) containing word vectors.
-        custom (bool, optional): If True, use the custom model.wv attribute to access word vectors (default).
-                                 If False, use the model directly to access word vectors.
 
     Returns:
         numpy.ndarray: The word vector representation of the input word. If the word is not present in the model,
@@ -46,8 +39,7 @@ def vectorize_sentence(sentence: str, model) -> list:
     Parameters:
         sentence (str): The input sentence to be vectorized.
         model (Word2Vec or KeyedVectors): The word embedding model (Word2Vec or KeyedVectors) containing word vectors.
-        custom (bool, optional): If True, use the custom model.wv attribute to access word vectors (default).
-                                 If False, use the model directly to access word vectors.
+
 
     Returns:
         list: A list of numpy arrays, where each array represents the word vector of a word in the input sentence.
@@ -71,8 +63,7 @@ def vectorize_sentences_sum(questions: list, model) -> list:
         Args:
             questions (list): A list of strings representing the input questions.
             model: The word embedding model used for vectorization.
-            custom (bool, optional): A flag indicating whether custom model is used or not.
-                                     Default is True.
+
 
         Returns:
             list: A list of two lists, where the first list contains the original questions,

@@ -1,6 +1,5 @@
 import nltk
 import numpy as np
-
 # nltk.download('averaged_perceptron_tagger')
 from sklearn.feature_extraction.text import TfidfVectorizer
 
@@ -38,6 +37,6 @@ feature_names = vectorizer.get_feature_names_out()
 top_words = [feature_names[index] for index in top_word_indices]
 
 top_nouns = [word for word in top_words[0][0] if word in nouns]
-print(top_nouns)
+print(top_nouns[:5])
 
 
