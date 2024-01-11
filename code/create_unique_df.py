@@ -25,5 +25,7 @@ for i in range(len(row)):
 
     df.iloc[i, 1] = string
 
+print(df.shape)
+
 file_path = 'data/data_unique.csv'
-df.to_csv(file_path, index=False)
+# df.to_csv(file_path, index=False)
