@@ -1,6 +1,7 @@
 import pickle
 from pathlib import Path
-
+from tensorflow.python.keras.models import Model, Sequential
+from tensorflow.python.keras.layers import Input, Embedding, LSTM
 from tensorflow.python.keras import backend as K
 from tensorflow.python.keras.layers import Layer
 from keras.utils import pad_sequences
@@ -81,6 +82,30 @@ def split_and_zero_padding(df, max_seq_length):
         dataset[side] = pad_sequences(dataset[side], padding='pre', truncating='post', maxlen=max_seq_length)
 
     return dataset
+
+
+def create_model(n_hidden,embedding_dim,max_seq_length):
+    with open('data/embeddings.pkl', 'rb') as file:
+        embeddings = pickle.load(file)
+    # Define the shared model
+    x = Sequential()
+    x.add(Embedding(len(embeddings), embedding_dim,
+                    weights=[embeddings], input_shape=(max_seq_length,), trainable=False))
+
+    # LSTM
+    x.add(LSTM(n_hidden))
+
+    shared_model = x
+
+    # The visible layer
+    left_input = Input(shape=(max_seq_length,), dtype='int32')
+    right_input = Input(shape=(max_seq_length,), dtype='int32')
+
+    # Pack it all up into a Manhattan Distance model
+    malstm_distance = ManDist()([shared_model(left_input), shared_model(right_input)])
+    model = Model(inputs=[left_input, right_input], outputs=[malstm_distance])
+
+    return model
 
 
 class ManDist(Layer):
