@@ -1,5 +1,8 @@
 import pickle
 from pathlib import Path
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
 from tensorflow.python.keras.models import Model, Sequential
 from tensorflow.python.keras.layers import Input, Embedding, LSTM
 from tensorflow.python.keras import backend as K
@@ -10,9 +13,71 @@ import gensim.downloader
 import numpy as np
 import itertools
 
+from code.preprocessing import remove_stopwords_and_punctuation, get_lemm_questions_series
+
+
+def load_quora_questions() -> pd.DataFrame:
+    """
+    Load Quora questions from a TSV (Tab-Separated Values) file into a pandas DataFrame and removes
+    all rows with null values.
+
+    Returns:
+        pd.DataFrame: A pandas DataFrame containing the Quora questions data.
+    """
+    tsv_file_path = r'data/quora_duplicate_questions.tsv'
+
+    with open(tsv_file_path, mode='r', encoding='utf-8') as tsv_file:
+        tsv_data = [line.strip().split('\t') for line in tsv_file]
+
+    df = pd.DataFrame(tsv_data[1:], columns=tsv_data[0])
+    df.dropna(inplace=True)
+    return df.iloc[:, 3:]
+
+
+def prepare_data_for_training(df):
+    """
+    Preprocesses and prepares data for training a machine learning model.
+
+    This function loads Quora questions from a DataFrame, removes stopwords, lemmatize questions
+    and splits the data into training and testing sets. It saves the preprocessed data
+    into CSV files for further use.
+
+    Returns:
+        None
+    """
+    question1 = df.question1
+    question2 = df.question2
+
+    question1 = [remove_stopwords_and_punctuation(q) for q in question1]
+    question2 = [remove_stopwords_and_punctuation(q) for q in question2]
+
+    lemm_q1 = get_lemm_questions_series(question1)
+    lemm_q2 = get_lemm_questions_series(question2)
+
+    df['question1'] = lemm_q1
+    df['question2'] = lemm_q2
+
+    X = df.drop(columns=['is_duplicate'])
+    y = df['is_duplicate']
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    train_df = pd.concat([X_train, y_train], axis=1)
+    test_df = pd.concat([X_test, y_test], axis=1)
+
+    train_df.to_csv('data/train_quora.csv', index=False)
+    test_df.to_csv('data/test_quora.csv', index=False)
+
+
 
 def text_to_word_list(text):
-    # Pre process and convert texts to a list of words
+    """
+    Preprocess and convert a text string to a list of words.
+
+    Parameters:
+    - text (str): Input text to be processed.
+
+    Returns:
+    - list: A list of words extracted from the input text.
+    """
     text = str(text)
     text = text.lower()
     text = text.split()
@@ -20,7 +85,18 @@ def text_to_word_list(text):
     return text
 
 
-def make_w2v_embeddings(df,word2vec, embedding_dim=300):
+def make_w2v_embeddings(df, word2vec, embedding_dim=300):
+    """
+    Embeds text data in a DataFrame using pre-trained word embeddings.
+
+    Parameters:
+    - df (pandas.DataFrame): DataFrame containing 'question1' and 'question2' columns.
+    - word2vec: Pre-trained word2vec model.
+    - embedding_dim (int): Dimensionality of word embeddings.
+
+    Returns:
+    - tuple: DataFrame with embedded representations and the embedding matrix.
+    """
     vocabs = {}
     vocabs_cnt = 0
 
@@ -74,7 +150,16 @@ def make_w2v_embeddings(df,word2vec, embedding_dim=300):
 
 
 def split_and_zero_padding(df, max_seq_length):
-    # Split to dicts
+    """
+    Split text data in a DataFrame and perform zero-padding for sequence alignment.
+
+    Parameters:
+    - df (pandas.DataFrame): DataFrame containing 'question1' and 'question2' columns.
+    - max_seq_length (int): Maximum sequence length for padding.
+
+    Returns:
+    - dict: A dictionary with 'left' and 'right' keys, each containing padded sequences.
+    """
     X = {'left': df['question1'], 'right': df['question2']}
 
     # Zero padding
@@ -84,7 +169,18 @@ def split_and_zero_padding(df, max_seq_length):
     return dataset
 
 
-def create_model(n_hidden,embedding_dim,max_seq_length):
+def create_model(n_hidden, embedding_dim, max_seq_length):
+    """
+    Create a Siamese LSTM model for text similarity prediction.
+
+    Parameters:
+    - n_hidden (int): Number of LSTM units in the hidden layer.
+    - embedding_dim (int): Dimensionality of word embeddings.
+    - max_seq_length (int): Maximum sequence length for input data.
+
+    Returns:
+    - keras.models.Model: A Siamese LSTM model for text similarity prediction.
+    """
     with open('data/embeddings.pkl', 'rb') as file:
         embeddings = pickle.load(file)
     # Define the shared model
@@ -132,11 +228,11 @@ class ManDist(Layer):
         return K.int_shape(self.result)
 
 
-class EmptyWord2Vec:
-    """
-    Just for test use.
-    """
-    vocab = {}
-    word_vec = {}
+# class EmptyWord2Vec:
+#     """
+#     Just for test use.
+#     """
+#     vocab = {}
+#     word_vec = {}
 
-
+#TODO add docstring and write help, rename help to readme

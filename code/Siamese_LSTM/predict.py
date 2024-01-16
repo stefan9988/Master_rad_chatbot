@@ -1,20 +1,31 @@
+from pathlib import Path
+
 import gensim.downloader
 import pandas as pd
 
 from sklearn.metrics import accuracy_score
 
-from util import make_w2v_embeddings, create_model
+from util import make_w2v_embeddings, create_model, load_quora_questions, prepare_data_for_training
 from util import split_and_zero_padding
 
 word2vec = gensim.downloader.load('word2vec-google-news-300')
 
+TRAIN_CSV = 'data/train_quora.csv'
 TEST_CSV = r'data/test_quora.csv'
 MODEL_SAVING_DIR = r'data/best_LSTM_weights.h5'
-test_df = pd.read_csv(TEST_CSV)
-Y_test = test_df.is_duplicate
 EMBEDDING_DIM = 300
 MAX_SEQ_LENGTH = 20
 N_HIDDEN = 50
+
+# Check if files exist
+path_train = Path(TRAIN_CSV)
+path_test = Path(TEST_CSV)
+if not path_train.is_file() or not path_test.is_file():
+    df = load_quora_questions()
+    prepare_data_for_training(df)
+test_df = pd.read_csv(TEST_CSV)
+Y_test = test_df.is_duplicate
+
 
 test_df, _ = make_w2v_embeddings(test_df, word2vec, embedding_dim=EMBEDDING_DIM)
 

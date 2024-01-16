@@ -1,4 +1,5 @@
 import pickle
+from pathlib import Path
 
 import gensim.downloader
 import mlflow
@@ -8,7 +9,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 from keras.callbacks import ModelCheckpoint
-from util import make_w2v_embeddings
+from util import make_w2v_embeddings, load_quora_questions, prepare_data_for_training
 from util import split_and_zero_padding
 from util import create_model
 
@@ -16,12 +17,20 @@ word2vec = gensim.downloader.load('word2vec-google-news-300')
 
 # File paths
 TRAIN_CSV = 'data/train_quora.csv'
+TEST_CSV = r'data/test_quora.csv'
 MODEL_SAVING_DIR = r'data/best_LSTM_weights.h5'
 EMBEDDING_DIM = 300
 MAX_SEQ_LENGTH = 20
 BATCH_SIZE = 1024
 N_EPOCHS = 1
 N_HIDDEN = 50
+
+# Check if files exist
+path_train = Path(TRAIN_CSV)
+path_test = Path(TEST_CSV)
+if not path_train.is_file() or not path_test.is_file():
+    df = load_quora_questions()
+    prepare_data_for_training(df)
 
 # Load training set
 train_df = pd.read_csv(TRAIN_CSV)
