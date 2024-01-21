@@ -22,7 +22,7 @@ MODEL_SAVING_DIR = r'data/best_LSTM_weights.h5'
 EMBEDDING_DIM = 300
 MAX_SEQ_LENGTH = 20
 BATCH_SIZE = 1024
-N_EPOCHS = 1
+N_EPOCHS = 100
 N_HIDDEN = 50
 
 # Check if files exist

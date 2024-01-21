@@ -1,3 +1,5 @@
+import os
+import pickle
 import re
 from typing import List, Tuple
 import nltk
@@ -21,6 +23,8 @@ def remove_stopwords_and_punctuation(question: str) -> str:
         """
     word_list = nltk.word_tokenize(question.lower())
     stop = set(stopwords.words('english') + list(ENGLISH_STOP_WORDS))
+    exclude_words = {"what", "where", "who", "why", "how","which","when","whom","whose"}
+    stop -= exclude_words
     pattern = r'[^\w\s]'
 
     processed_words = [re.sub(pattern, '', word) for word in word_list if word not in stop]
@@ -105,6 +109,12 @@ def tf_idf(train_s: pd.Series, test_s: pd.Series or None, num_features: int or N
     """
     vectorizer = TfidfVectorizer(max_features=num_features)
     train_vectors = vectorizer.fit_transform(train_s)
+
+    vectorizer_filename = r'data/vectorizer.pkl'
+    if not os.path.exists(vectorizer_filename):
+        with open(vectorizer_filename, 'wb') as file:
+            pickle.dump(vectorizer, file)
+
     if test_s is not None:
         test_vectors = vectorizer.transform(test_s)
     else:
@@ -113,6 +123,20 @@ def tf_idf(train_s: pd.Series, test_s: pd.Series or None, num_features: int or N
 
 
     return train_vectors, test_vectors, feature_names
+
+def assign_sentiment_values(df: pd.DataFrame) -> pd.DataFrame:
+    """
+        Assign binary values to the 'sentiment' column based on the original values.
+
+        Parameters:
+        df (pd.DataFrame): Input DataFrame with a 'sentiment' column containing text data.
+
+        Returns:
+        pd.DataFrame: DataFrame with the 'sentiment' column updated to binary values.
+        """
+    df['sentiment'] = df['sentiment'].apply(lambda x: 1 if x == 'positive' else 0)
+    return df
+
 
 if __name__ == '__main__':
     df = pd.read_csv('data/data_unique.csv')

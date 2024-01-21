@@ -235,4 +235,4 @@ class ManDist(Layer):
 #     vocab = {}
 #     word_vec = {}
 
-#TODO add docstring and write help, rename help to readme
+

@@ -1,4 +1,11 @@
+# Chatbot
+ - This is my master's thesis project in which I created a chatbot that answers questions related to insurance, 
+   underlines keywords and determines the sentiment of the answer.
+
 # Folder code
+
+## main.py 
+ - This script contains the complete code for running the app.
 
 ## create_unique_df.py 
  - The insurance qna dataset contains some repeating questions with different answers. 
@@ -21,9 +28,6 @@
 ## keyword_extraction.py 
  - Keywords could be extracted using term frequency, so this script implements code that finds the most frequent 
    nouns in a document and prints the top 5 of them.
-
-## main.py 
- - This script contains the complete code for running the model with the best parameters.
 
 ## Siamese_LSTM folder
  - This folder is where all scripts for creating, training and predicting of an LSTM model are. 

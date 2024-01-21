@@ -84,7 +84,8 @@ def vectorize_sentences_sum(questions: list, model) -> list:
 
 if __name__ == '__main__':
     pretrained_model = gensim.downloader.load('word2vec-google-news-300')
-    questions, test_questions, original_question = load_data()
+    df, test_questions, original_question = load_data()
+    questions = df.Question
     results = []
 
     # Preprocessing

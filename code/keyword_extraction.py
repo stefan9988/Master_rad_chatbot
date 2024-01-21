@@ -12,31 +12,35 @@ text = "A renters insurance policy will typically provide coverage for your pers
 
 
 
+def extract_keywords(text):
+       text = text.lower()
 
-text = text.lower()
+       # Tokenize the text into words
+       tokens = nltk.word_tokenize(text)
 
-# Tokenize the text into words
-tokens = nltk.word_tokenize(text)
+       # Use part-of-speech tagging to identify the nouns in the text
+       tags = nltk.pos_tag(tokens)
+       nouns = [word for (word, tag) in tags if tag in ["NN", "NNS", "NNP"]]  # Consider both singular and plural nouns
 
-# Use part-of-speech tagging to identify the nouns in the text
-tags = nltk.pos_tag(tokens)
-nouns = [word for (word, tag) in tags if tag in ["NN", "NNS", "NNP"]]  # Consider both singular and plural nouns
+       # Use term frequency-inverse document frequency (TF-IDF) analysis to rank the nouns
+       vectorizer = TfidfVectorizer()
+       tfidf = vectorizer.fit_transform([text])
 
-# Use term frequency-inverse document frequency (TF-IDF) analysis to rank the nouns
-vectorizer = TfidfVectorizer()
-tfidf = vectorizer.fit_transform([text])
+       # Convert the TF-IDF matrix to a dense NumPy array
+       dense_tfidf = tfidf.todense()
 
-# Convert the TF-IDF matrix to a dense NumPy array
-dense_tfidf = tfidf.todense()
+       # Get the indices of the top 3 most important nouns
+       top_word_indices = np.argsort(dense_tfidf)[0, ::-1]
 
-# Get the indices of the top 3 most important nouns
-top_word_indices = np.argsort(dense_tfidf)[0, ::-1]
+       # Map the indices to the actual nouns
+       feature_names = vectorizer.get_feature_names_out()
+       top_words = [feature_names[index] for index in top_word_indices]
 
-# Map the indices to the actual nouns
-feature_names = vectorizer.get_feature_names_out()
-top_words = [feature_names[index] for index in top_word_indices]
+       top_nouns = [word for word in top_words[0][0] if word in nouns]
 
-top_nouns = [word for word in top_words[0][0] if word in nouns]
-print(top_nouns[:5])
+       return top_nouns
 
+if __name__ == '__main__':
+       keywords = extract_keywords(text)
+       print(keywords[:5])
 

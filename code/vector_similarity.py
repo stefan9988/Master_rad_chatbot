@@ -23,9 +23,8 @@ def load_data():
     original_question = data['original']
 
     df = pd.read_csv('data/data_unique.csv')
-    questions = df.Question
 
-    return questions, pd.Series(test_questions, name='Test Question'), pd.Series(original_question,
+    return df, pd.Series(test_questions, name='Test Question'), pd.Series(original_question,
                                                                                  name='Original Question')
 
 
@@ -56,7 +55,8 @@ def calculate_similarity(all_questions_vector, question_vector, questions, metri
 
 if __name__ == '__main__':
     # Load df
-    questions, test_questions, original_question = load_data()
+    df, test_questions, original_question = load_data()
+    questions = df.Question
 
     # Preprocessing
     for preprocessing in ['No Preprocessing', 'Lemmatization', 'Stemming']:
