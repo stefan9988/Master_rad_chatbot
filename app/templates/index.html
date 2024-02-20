@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='FTN_Logo.png') }}" type="image/x-icon">
+    <title>Insurance Chatbot</title>
+</head>
+<body>
+<div class="container">
+    <div>
+        <h1>Insurance Chatbot</h1>
+        <img src="{{ url_for('static', filename='FTN_Logo.png') }}" alt="FTN Logo" width="125" height="125">
+    </div>
+    <form method="post">
+        <input placeholder="Ask me anything" type="text" id="user_input" name="user_input" required>
+        <button type="submit">Ask</button>
+    </form>
+    {% if most_similar_question %}
+    <div class="result">
+        <p><strong>Most similar question:</strong> {{ most_similar_question }}</p>
+    </div>
+    <div class="result">
+        <p><strong>Answer:</strong> {{ answer_r }}</p>
+    </div>
+    <div class="result">
+        <p><strong>Sentiment:</strong> {{ sentiment }}</p>
+    </div>
+    {% endif %}
+    <!--    <h2>History:</h2>-->
+    <!--        <ul>-->
+    <!--            {% for entry in history %}-->
+    <!--                <li>{{ entry.input }} -> {{ entry.output }}</li>-->
+    <!--                <li>-&#45;&#45;&#45;&#45;&#45;&#45;</li>-->
+    <!--            {% endfor %}-->
+    <!--        </ul>-->
+
+</div>
+</body>
+</html>
+
+

@@ -5,7 +5,7 @@ import pandas as pd
 
 from sklearn.metrics import accuracy_score
 
-from util import make_w2v_embeddings, create_model, load_quora_questions, prepare_data_for_training
+from util import make_w2v_embeddings, load_quora_questions, prepare_data_for_training, create_malstm_model
 from util import split_and_zero_padding
 
 word2vec = gensim.downloader.load('word2vec-google-news-300')
@@ -35,7 +35,7 @@ X_test = split_and_zero_padding(test_df, MAX_SEQ_LENGTH)
 # Make sure everything is ok
 assert X_test['left'].shape == X_test['right'].shape
 
-model = create_model(N_HIDDEN, EMBEDDING_DIM, MAX_SEQ_LENGTH)
+model = create_malstm_model(N_HIDDEN, EMBEDDING_DIM, MAX_SEQ_LENGTH)
 model.load_weights(MODEL_SAVING_DIR)
 
 preds = model.predict([X_test['left'], X_test['right']])

@@ -12,8 +12,14 @@ from nltk.corpus import stopwords
 import gensim.downloader
 import numpy as np
 import itertools
-
+import tensorflow as tf
 from code.preprocessing import remove_stopwords_and_punctuation, get_lemm_questions_series
+import tensorflow.python.keras.backend as K
+
+from tensorflow.python.keras import layers
+from tensorflow.python.keras.models import Model
+from tensorflow.python.keras import regularizers
+
 
 
 def load_quora_questions() -> pd.DataFrame:
@@ -169,63 +175,63 @@ def split_and_zero_padding(df, max_seq_length):
     return dataset
 
 
-def create_model(n_hidden, embedding_dim, max_seq_length):
-    """
-    Create a Siamese LSTM model for text similarity prediction.
-
-    Parameters:
-    - n_hidden (int): Number of LSTM units in the hidden layer.
-    - embedding_dim (int): Dimensionality of word embeddings.
-    - max_seq_length (int): Maximum sequence length for input data.
-
-    Returns:
-    - keras.models.Model: A Siamese LSTM model for text similarity prediction.
-    """
-    with open('data/embeddings.pkl', 'rb') as file:
-        embeddings = pickle.load(file)
-    # Define the shared model
-    x = Sequential()
-    x.add(Embedding(len(embeddings), embedding_dim,
-                    weights=[embeddings], input_shape=(max_seq_length,), trainable=False))
-
-    # LSTM
-    x.add(LSTM(n_hidden))
-
-    shared_model = x
-
-    # The visible layer
-    left_input = Input(shape=(max_seq_length,), dtype='int32')
-    right_input = Input(shape=(max_seq_length,), dtype='int32')
-
-    # Pack it all up into a Manhattan Distance model
-    malstm_distance = ManDist()([shared_model(left_input), shared_model(right_input)])
-    model = Model(inputs=[left_input, right_input], outputs=[malstm_distance])
-
-    return model
-
-
-class ManDist(Layer):
-    """
-    Keras Custom Layer that calculates Manhattan Distance.
-    """
-
-    # initialize the layer, No need to include inputs parameter!
-    def __init__(self, **kwargs):
-        self.result = None
-        super(ManDist, self).__init__(**kwargs)
-
-    # input_shape will automatic collect input shapes to build layer
-    def build(self, input_shape):
-        super(ManDist, self).build(input_shape)
-
-    # This is where the layer's logic lives.
-    def call(self, x, **kwargs):
-        self.result = K.exp(-K.sum(K.abs(x[0] - x[1]), axis=1, keepdims=True))
-        return self.result
-
-    # return output shape
-    def compute_output_shape(self, input_shape):
-        return K.int_shape(self.result)
+# def create_model(n_hidden, embedding_dim, max_seq_length):
+#     """
+#     Create a Siamese LSTM model for text similarity prediction.
+#
+#     Parameters:
+#     - n_hidden (int): Number of LSTM units in the hidden layer.
+#     - embedding_dim (int): Dimensionality of word embeddings.
+#     - max_seq_length (int): Maximum sequence length for input data.
+#
+#     Returns:
+#     - keras.models.Model: A Siamese LSTM model for text similarity prediction.
+#     """
+#     with open('data/embeddings.pkl', 'rb') as file:
+#         embeddings = pickle.load(file)
+#     # Define the shared model
+#     x = Sequential()
+#     x.add(Embedding(len(embeddings), embedding_dim,
+#                     weights=[embeddings], input_shape=(max_seq_length,), trainable=False))
+#
+#     # LSTM
+#     x.add(LSTM(n_hidden))
+#
+#     shared_model = x
+#
+#     # The visible layer
+#     left_input = Input(shape=(max_seq_length,), dtype='int32')
+#     right_input = Input(shape=(max_seq_length,), dtype='int32')
+#
+#     # Pack it all up into a Manhattan Distance model
+#     malstm_distance = ManDist()([shared_model(left_input), shared_model(right_input)])
+#     model = Model(inputs=[left_input, right_input], outputs=[malstm_distance])
+#
+#     return model
+#
+#
+# class ManDist(Layer):
+#     """
+#     Keras Custom Layer that calculates Manhattan Distance.
+#     """
+#
+#     # initialize the layer, No need to include inputs parameter!
+#     def __init__(self, **kwargs):
+#         self.result = None
+#         super(ManDist, self).__init__(**kwargs)
+#
+#     # input_shape will automatic collect input shapes to build layer
+#     def build(self, input_shape):
+#         super(ManDist, self).build(input_shape)
+#
+#     # This is where the layer's logic lives.
+#     def call(self, x, **kwargs):
+#         self.result = K.exp(-K.sum(K.abs(x[0] - x[1]), axis=1, keepdims=True))
+#         return self.result
+#
+#     # return output shape
+#     def compute_output_shape(self, input_shape):
+#         return K.int_shape(self.result)
 
 
 # class EmptyWord2Vec:
@@ -236,3 +242,54 @@ class ManDist(Layer):
 #     word_vec = {}
 
 
+def exponent_neg_manhattan_distance(left, right):
+    return K.exp(-K.sum(K.abs(left-right), axis=1, keepdims=True))
+
+
+def create_malstm_model(n_hidden, embedding_dim, max_seq_length):
+    # https://github.com/MikeXydas/SiameseLSTM/blob/master/SiameseLSTM/SiamLSTM.py
+    # Parameters
+    dropout_lstm = 0.23
+    dropout_dense = 0.23
+    regularizing = 0.002
+
+    with open('data/embeddings.pkl', 'rb') as file:
+        embeddings = pickle.load(file)
+    # Input layers
+    left_input = layers.Input(shape=(max_seq_length,), dtype='int32')
+    right_input = layers.Input(shape=(max_seq_length,), dtype='int32')
+
+    embedding_layer = layers.Embedding(len(embeddings), embedding_dim,
+                                       weights=[embeddings], input_length=max_seq_length, trainable=False)
+
+    # Embedded version of the inputs
+    encoded_left = embedding_layer(left_input)
+    encoded_right = embedding_layer(right_input)
+
+    # Since this is a siamese network, both sides share the same LSTM
+    shared_lstm = layers.LSTM(n_hidden, dropout=dropout_lstm, kernel_regularizer=regularizers.l2(regularizing),
+                              recurrent_dropout=dropout_lstm)
+
+    left_output = shared_lstm(encoded_left)
+    right_output = shared_lstm(encoded_right)
+
+    # Concatenate the two question representations and the engineered features if they exist
+    concatenated = layers.Concatenate()([left_output, right_output])
+    concatenated = layers.Dropout(dropout_dense)(concatenated)
+    concatenated = tf.keras.layers.BatchNormalization()(concatenated)
+
+    concatenated = layers.Dense(150, kernel_regularizer=regularizers.l2(regularizing), activation='relu')(concatenated)
+    concatenated = layers.Dropout(dropout_dense)(concatenated)
+    concatenated = tf.keras.layers.BatchNormalization()(concatenated)
+
+    concatenated = layers.Dense(70, kernel_regularizer=regularizers.l2(regularizing), activation='relu')(concatenated)
+    concatenated = layers.Dropout(dropout_dense)(concatenated)
+    concatenated = tf.keras.layers.BatchNormalization()(concatenated)
+
+    concatenated = layers.Dense(35, kernel_regularizer=regularizers.l2(regularizing), activation='relu')(concatenated)
+    concatenated = layers.Dropout(dropout_dense)(concatenated)
+    concatenated = tf.keras.layers.BatchNormalization()(concatenated)
+
+    output = layers.Dense(1, activation='sigmoid')(concatenated)
+
+    return Model([left_input, right_input], output)

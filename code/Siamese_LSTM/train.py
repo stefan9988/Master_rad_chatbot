@@ -9,7 +9,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 from keras.callbacks import ModelCheckpoint
-from util import make_w2v_embeddings, load_quora_questions, prepare_data_for_training
+from util import make_w2v_embeddings, load_quora_questions, prepare_data_for_training, create_malstm_model
 from util import split_and_zero_padding
 from util import create_model
 
@@ -57,7 +57,8 @@ Y_validation = Y_validation.values
 assert X_train['left'].shape == X_train['right'].shape
 assert len(X_train['left']) == len(Y_train)
 
-model = create_model(N_HIDDEN, EMBEDDING_DIM, MAX_SEQ_LENGTH)
+# model = create_model(N_HIDDEN, EMBEDDING_DIM, MAX_SEQ_LENGTH)
+model = create_malstm_model(N_HIDDEN, EMBEDDING_DIM, MAX_SEQ_LENGTH)
 
 # Set the experiment name
 mlflow.set_experiment("LSTM training")
