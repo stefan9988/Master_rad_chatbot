@@ -2,10 +2,11 @@
  - This is my master's thesis project in which I created a chatbot that answers questions related to insurance, 
    underlines keywords and determines the sentiment of the answer.
 
-# Folder code
+## app.py
+ - This script contains the complete code for running the app with frontend.
 
 ## main.py 
- - This script contains the complete code for running the app.
+ - This script contains the complete code for running the app without frontend.
 
 ## create_unique_df.py 
  - The insurance qna dataset contains some repeating questions with different answers. 
