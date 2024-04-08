@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import pandas as pd
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 import matplotlib.pyplot as plt
 from nltk.tokenize import word_tokenize
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
@@ -60,32 +60,82 @@ def analyze_sentiment_textblob(text):
     return sentiment_label
 
 
-def show_results(accuracy_textblob, accuracy_wbw, accuracy_sent):
-    labels = ['TextBlob', 'Word by Word', 'Sentiment Analysis']
+def show_results(metrics_dict):
+    labels = list(metrics_dict.keys())
 
-    # Heights of the bars
-    heights = [accuracy_textblob, accuracy_wbw, accuracy_sent]
+    # Define the metrics to include in the plot
+    metrics = ['accuracy', 'precision', 'recall', 'f1_score']
 
-    # Plotting the bar plot
+    # Prepare data for each metric
+    metric_data = {metric: [metrics_dict[label][metric] for label in labels] for metric in metrics}
+
+    x = range(len(labels))
+    width = 0.2  # Width of each bar
+
     plt.figure(figsize=(15, 8))
-    bars = plt.bar(labels, heights)
 
-    # Adding the value above each bar
-    for bar, height in zip(bars, heights):
-        plt.text(bar.get_x() + bar.get_width() / 2, height, round(height, 2),
-                 ha='center', va='bottom')
+    # Plotting bars for each metric
+    for i, metric in enumerate(metrics):
+        bars = plt.bar([pos + i * width for pos in x], metric_data[metric], width=width, label=metric.capitalize())
 
-    # Adding the title and labels
-    plt.title('Accuracy Comparison')
+        # Adding value annotations above each bar
+        for bar, value in zip(bars, metric_data[metric]):
+            plt.text(bar.get_x() + bar.get_width() / 2, value, round(value, 2), ha='center', va='bottom')
+
+    plt.xticks([pos + width for pos in x], labels)
     plt.xlabel('Methods')
-    plt.ylabel('Accuracy')
+    plt.ylabel('Metrics')
+    plt.title('Sentiment classification results')
+    plt.legend()
+    plt.tight_layout()
 
-    save_path = f"results/Lexical_Sentiment_Classification.png"
+    save_path = f"results/Lexical_Sentiment_Performance.png"
     path_save = Path(save_path)
     if not path_save.is_file():
         plt.savefig(save_path)
 
     plt.show()
+
+
+def create_metrics_dict(df):
+    accuracy_textblob = accuracy_score(df.textblob.astype(int), df.sentiment)
+    accuracy_wbw = accuracy_score(df.wbw.astype(int), df.sentiment)
+    accuracy_sent = accuracy_score(df.sent.astype(int), df.sentiment)
+
+    precision_textblob = precision_score(df.textblob.astype(int), df.sentiment)
+    precision_wbw = precision_score(df.wbw.astype(int), df.sentiment)
+    precision_sent = precision_score(df.sent.astype(int), df.sentiment)
+
+    recall_textblob = recall_score(df.textblob.astype(int), df.sentiment)
+    recall_wbw = recall_score(df.wbw.astype(int), df.sentiment)
+    recall_sent = recall_score(df.sent.astype(int), df.sentiment)
+
+    f1_textblob = f1_score(df.textblob.astype(int), df.sentiment)
+    f1_wbw = f1_score(df.wbw.astype(int), df.sentiment)
+    f1_sent = f1_score(df.sent.astype(int), df.sentiment)
+
+    metrics_dict = {
+        'TextBlob': {
+            'accuracy': accuracy_textblob,
+            'precision': precision_textblob,
+            'recall': recall_textblob,
+            'f1_score': f1_textblob
+        },
+        'Word by Word': {
+            'accuracy': accuracy_wbw,
+            'precision': precision_wbw,
+            'recall': recall_wbw,
+            'f1_score': f1_wbw
+        },
+        'Sentiment Analysis': {
+            'accuracy': accuracy_sent,
+            'precision': precision_sent,
+            'recall': recall_sent,
+            'f1_score': f1_sent
+        }
+    }
+
+    return metrics_dict
 
 
 if __name__ == '__main__':
@@ -104,12 +154,5 @@ if __name__ == '__main__':
 
     df = pd.read_csv(IMDB_LEX)
 
-    accuracy_textblob = accuracy_score(df.textblob.astype(int), df.sentiment)
-    accuracy_wbw = accuracy_score(df.wbw.astype(int), df.sentiment)
-    accuracy_sent = accuracy_score(df.sent.astype(int), df.sentiment)
-
-    accuracy_textblob = round(accuracy_textblob, 2)
-    accuracy_wbw = round(accuracy_wbw, 2)
-    accuracy_sent = round(accuracy_sent, 2)
-
-    show_results(accuracy_textblob, accuracy_wbw, accuracy_sent)
+    metrics_dict = create_metrics_dict(df)
+    show_results(metrics_dict)
