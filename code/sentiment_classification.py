@@ -239,7 +239,7 @@ def svm_classifier(X_train, X_test, y_train, y_test, num_features):
 
     acc = evaluate_model(y_test, y_pred, 'SVM', num_features=num_features)
 
-    return acc
+    return acc, y_pred
 
 
 def knn_classifier(X_train, X_test, y_train, y_test, num_features):
@@ -272,7 +272,7 @@ def xgboost_classifier(X_train, X_test, y_train, y_test, feature_names, num_feat
         with open(filename, 'wb') as file:
             pickle.dump(xgb_model, file)
 
-    return acc
+    return acc, y_pred
 
 
 def random_forest_classifier(X_train, X_test, y_train, y_test, feature_names, num_features):
@@ -445,9 +445,9 @@ if __name__ == '__main__':
     for num_features in [100, 500, 1000, 2000]:
         X_train, X_test, y_train, y_test, feature_names = split_data(df, num_features)
 
-        a1 = svm_classifier(X_train, X_test, y_train, y_test, num_features)
+        a1, _ = svm_classifier(X_train, X_test, y_train, y_test, num_features)
         a2 = knn_classifier(X_train, X_test, y_train, y_test, num_features)
-        a3 = xgboost_classifier(X_train, X_test, y_train, y_test, feature_names, num_features)
+        a3, _ = xgboost_classifier(X_train, X_test, y_train, y_test, feature_names, num_features)
         a4 = random_forest_classifier(X_train, X_test, y_train, y_test, feature_names, num_features)
         a5 = neural_network(X_train, X_test, y_train, y_test, num_features)
 

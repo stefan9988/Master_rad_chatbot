@@ -7,6 +7,8 @@ from nltk.tokenize import word_tokenize
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import textblob
 
+from code.sentiment_classification import split_data, xgboost_classifier, svm_classifier
+
 
 # Downloading NLTK resources if not already downloaded
 # nltk.download('punkt')
@@ -60,7 +62,7 @@ def analyze_sentiment_textblob(text):
     return sentiment_label
 
 
-def show_results(metrics_dict):
+def show_results(metrics_dict, save_path):
     labels = list(metrics_dict.keys())
 
     # Define the metrics to include in the plot
@@ -89,7 +91,6 @@ def show_results(metrics_dict):
     plt.legend()
     plt.tight_layout()
 
-    save_path = f"results/Lexical_Sentiment_Performance.png"
     path_save = Path(save_path)
     if not path_save.is_file():
         plt.savefig(save_path)
@@ -142,10 +143,10 @@ if __name__ == '__main__':
     IMDB_LEM = 'data/IMDB_lemm.csv'
     IMDB_LEX = 'data/IMDB_lex.csv'
 
-    path_imdb_lem = Path(IMDB_LEX)
-    if not path_imdb_lem.is_file():
+    path_imdb_lex = Path(IMDB_LEX)
+    if not path_imdb_lex.is_file():
         df = pd.read_csv(IMDB_LEM)
-        df = df.head()
+        # df = df.head()
         df['textblob'] = df['review'].apply(analyze_sentiment_textblob)
         df['wbw'] = df['review'].apply(analyze_sentiment_word_by_word)
         df['sent'] = df['review'].apply(analyze_sentiment_sentence)
@@ -155,4 +156,38 @@ if __name__ == '__main__':
     df = pd.read_csv(IMDB_LEX)
 
     metrics_dict = create_metrics_dict(df)
-    show_results(metrics_dict)
+    show_results(metrics_dict,  f"results/Lexical_Sentiment_Performance.png")
+
+    # ML METHODS
+    # df = pd.read_csv(IMDB_LEM)
+    # num_features = 1000
+    # X_train, X_test, y_train, y_test, feature_names = split_data(df, num_features)
+    # _, xgb_pred = xgboost_classifier(X_train, X_test, y_train, y_test, feature_names, num_features)
+    # _, svm_pred = svm_classifier(X_train, X_test, y_train, y_test, num_features)
+    #
+    # xgb_acc = accuracy_score(y_test,xgb_pred)
+    # xgb_prec = precision_score(y_test,xgb_pred)
+    # xgb_recall = recall_score(y_test,xgb_pred)
+    # xgb_f1 = f1_score(y_test,xgb_pred)
+    #
+    # svm_acc = accuracy_score(y_test, svm_pred)
+    # svm_prec = precision_score(y_test, svm_pred)
+    # svm_recall = recall_score(y_test, svm_pred)
+    # svm_f1 = f1_score(y_test, svm_pred)
+    #
+    # xgb_svm_dict = {
+    #     'XGB': {
+    #         'accuracy': xgb_acc,
+    #         'precision': xgb_prec,
+    #         'recall': xgb_recall,
+    #         'f1_score': xgb_f1
+    #     },
+    #     'SVM': {
+    #         'accuracy': svm_acc,
+    #         'precision': svm_prec,
+    #         'recall': svm_recall,
+    #         'f1_score': svm_f1
+    #     }
+    # }
+    #
+    # show_results(xgb_svm_dict, f"results/XGB_SVM_Sentiment_Classification.png")
