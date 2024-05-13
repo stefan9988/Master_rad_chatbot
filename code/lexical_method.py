@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from nltk.tokenize import word_tokenize
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import textblob
+from sklearn.model_selection import train_test_split
 
 from code.sentiment_classification import split_data, xgboost_classifier, svm_classifier
 
@@ -139,32 +140,77 @@ def create_metrics_dict(df):
     return metrics_dict
 
 
+def combine_sentiment_predictions(pred1, pred2, pred3, weight1, weight2, weight3):
+    """
+    Combine sentiment predictions from three models using weighted sum.
+
+    Args:
+    - pred1: Sentiment prediction from the first model (int, 0 or 1).
+    - pred2: Sentiment prediction from the second model (int, 0 or 1).
+    - pred3: Sentiment prediction from the third model (int, 0 or 1).
+    - weight1: Weight for the first model's prediction (float).
+    - weight2: Weight for the second model's prediction (float).
+    - weight3: Weight for the third model's prediction (float).
+
+    Returns:
+    - Combined sentiment prediction (int, 0 or 1).
+    """
+    if weight1 + weight2 + weight3 != 1:
+        raise ValueError("Weights must sum to 1.")
+
+    combined_pred = round((pred1 * weight1) + (pred2 * weight2) + (pred3 * weight3))
+    return combined_pred
+
 if __name__ == '__main__':
     IMDB_LEM = 'data/IMDB_lemm.csv'
     IMDB_LEX = 'data/IMDB_lex.csv'
 
-    path_imdb_lex = Path(IMDB_LEX)
-    if not path_imdb_lex.is_file():
-        df = pd.read_csv(IMDB_LEM)
-        # df = df.head()
-        df['textblob'] = df['review'].apply(analyze_sentiment_textblob)
-        df['wbw'] = df['review'].apply(analyze_sentiment_word_by_word)
-        df['sent'] = df['review'].apply(analyze_sentiment_sentence)
-
-        df.to_csv(IMDB_LEX, index=False)
-
-    df = pd.read_csv(IMDB_LEX)
-
-    metrics_dict = create_metrics_dict(df)
-    show_results(metrics_dict,  f"results/Lexical_Sentiment_Performance.png")
+    # path_imdb_lex = Path(IMDB_LEX)
+    # if not path_imdb_lex.is_file():
+    #     df = pd.read_csv(IMDB_LEM)
+    #     # df = df.head()
+    #     df['textblob'] = df['review'].apply(analyze_sentiment_textblob)
+    #     df['wbw'] = df['review'].apply(analyze_sentiment_word_by_word)
+    #     df['sent'] = df['review'].apply(analyze_sentiment_sentence)
+    #
+    #     df.to_csv(IMDB_LEX, index=False)
+    #
+    # df = pd.read_csv(IMDB_LEX)
+    # metrics_dict = create_metrics_dict(df)
+    # show_results(metrics_dict,  f"results/Lexical_Sentiment_Performance.png")
 
     # ML METHODS
-    # df = pd.read_csv(IMDB_LEM)
-    # num_features = 1000
-    # X_train, X_test, y_train, y_test, feature_names = split_data(df, num_features)
-    # _, xgb_pred = xgboost_classifier(X_train, X_test, y_train, y_test, feature_names, num_features)
-    # _, svm_pred = svm_classifier(X_train, X_test, y_train, y_test, num_features)
-    #
+    df = pd.read_csv(IMDB_LEM)
+    num_features = 1000
+    X_train, X_test, y_train, y_test, feature_names = split_data(df, num_features)
+    _, xgb_pred = xgboost_classifier(X_train, X_test, y_train, y_test, feature_names, num_features)
+    _, svm_pred = svm_classifier(X_train, X_test, y_train, y_test, num_features)
+
+    X_train, X_test, y_train, y_test = train_test_split(df.review, df.sentiment, test_size=0.2, random_state=42)
+    lex_pred = round(X_test.apply(analyze_sentiment_sentence))
+
+    # Combine predictions using specified weights
+    weight_xgb = 0.4
+    weight_svm = 0.4
+    weight_lex = 0.2
+
+    combined_prediction = combine_sentiment_predictions(xgb_pred, svm_pred, lex_pred, weight_xgb, weight_svm,
+                                                        weight_lex)
+    comb_acc = accuracy_score(y_test,combined_prediction)
+    comb_prec = precision_score(y_test,combined_prediction)
+    comb_recall = recall_score(y_test,combined_prediction)
+    comb_f1 = f1_score(y_test,combined_prediction)
+
+    comb_dict = {
+        'Combined': {
+            'accuracy': comb_acc,
+            'precision': comb_prec,
+            'recall': comb_recall,
+            'f1_score': comb_f1
+        }}
+
+    show_results(comb_dict, f"results/Combined_Sentiment_Classification.png")
+
     # xgb_acc = accuracy_score(y_test,xgb_pred)
     # xgb_prec = precision_score(y_test,xgb_pred)
     # xgb_recall = recall_score(y_test,xgb_pred)
